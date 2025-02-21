@@ -273,6 +273,27 @@ ocaml_emulator/cheri_riscv_ocaml_sim_RV64 c_emulator/cheri_riscv_sim_RV64 c_emul
 all: ocaml_emulator/cheri_riscv_ocaml_sim_$(ARCH) c_emulator/cheri_riscv_sim_$(ARCH) riscv_isa riscv_coq riscv_hol riscv_rmem
 .PHONY: all
 
+CHERI_DECODE_DIR = cheri_decode
+SAIL_CHERI_DECODE_SRCS = $(SAIL_RISCV_MODEL_DIR)/prelude.sail \
+                         $(SAIL_RISCV_MODEL_DIR)/riscv_errors.sail \
+                         $(SAIL_RISCV_MODEL_DIR)/range_util.sail \
+                         $(SAIL_RISCV_MODEL_DIR)/riscv_xlen64.sail \
+                         $(SAIL_RISCV_MODEL_DIR)/riscv_xlen.sail \
+                         ${SAIL_CHERI_MODEL_DIR}/cheri_prelude.sail \
+                         ${SAIL_CHERI_MODEL_DIR}/cheri_types.sail \
+                         ${SAIL_CHERI_MODEL_DIR}/cheri_prelude_128.sail \
+                         ${SAIL_CHERI_MODEL_DIR}/cheri_cap_common.sail \
+                         ${CHERI_DECODE_DIR}/cheri_decode.sail
+
+generated_definitions/c/cheri_decode.c: $(SAIL_CHERI_DECODE_SRCS) Makefile
+	mkdir -p generated_definitions/c
+	$(SAIL) --c-preserve print_decoded_cap $(SAIL_FLAGS) -O -Oconstant_fold -memo_z3 -c -c_include riscv_prelude.h -c_include riscv_platform.h -c_no_main $(SAIL_CHERI_DECODE_SRCS) -o $(basename $@)
+
+cheri_decode: ${CHERI_DECODE_DIR}/cheri_decode
+
+${CHERI_DECODE_DIR}/cheri_decode: generated_definitions/c/cheri_decode.c ${CHERI_DECODE_DIR}/cheri_decode.c $(SOFTFLOAT_LIBS) Makefile
+	gcc $(C_WARNINGS) $(C_FLAGS) $< ${CHERI_DECODE_DIR}/cheri_decode.c $(SAIL_LIB_SRCS) $(C_LIBS) -o $@
+
 csim: c_emulator/cheri_riscv_sim_$(ARCH)
 .PHONY: csim
 
