@@ -18,10 +18,10 @@ void get_cap_halves(const char *hex_str, uint64_t *p_hi, uint64_t *p_lo) {
   buff[32] = '\0';
   strncpy(buff+32-len, hex_str, len);
   // extract capability lo bits
-  *p_lo = strtol(buff+16, NULL, 16);
+  *p_lo = strtoull(buff+16, NULL, 16);
   // extract capability hi bits
   buff[16] = '\0';
-  *p_hi = strtol(buff, NULL, 16);
+  *p_hi = strtoull(buff, NULL, 16);
 }
 
 int main(int argc, char * argv[]) {
