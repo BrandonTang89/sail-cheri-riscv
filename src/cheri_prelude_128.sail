@@ -87,7 +87,7 @@ type cap_len_width : Int = cap_addr_width + 1
 let  cap_len_width = sizeof(cap_len_width)
 
 /* For CLoadTags and CClearTags, which operate at cache line granularity */
-type caps_per_cache_line : Int = 4
+type caps_per_cache_line : Int = 1
 let  caps_per_cache_line = sizeof(caps_per_cache_line)
 
 type internal_E_take_bits : Int = 3
