@@ -32,10 +32,10 @@ mapping clause assembly = C_LC(cdc, csc1, uimm)
  * Load capability instruction, authorised by the capability in cs1. Take
  * a load address misaligned exception if not naturally aligned.
  */
-function clause execute(C_LC(cdc, csc1, uimm)) = {
+function clause decompress(C_LC(cdc, csc1, uimm)) = {
   let cd = creg2reg_idx(cdc) in
   let cs1 = creg2reg_idx(csc1) in
-  execute(LoadCapImm(cd, cs1, zero_extend(uimm)))
+  Some(LoadCapImm(cd, cs1, zero_extend(uimm)))
 }
 
 union clause ast = C_LCSP : (regidx, bits(10))
@@ -64,8 +64,8 @@ mapping clause assembly = C_LCSP(cd, uimm)
  * Load capability instruction, authorised by the capability in cs1. Take
  * a load address misaligned exception if not naturally aligned.
  */
-function clause execute(C_LCSP(cd, uimm)) =
-  execute(LoadCapImm(cd, sp, zero_extend(uimm)))
+function clause decompress(C_LCSP(cd, uimm)) =
+  Some(LoadCapImm(cd, sp, zero_extend(uimm)))
 
 /*
  * The c.lcsp encoding with cd == 0 should raise an illegal instruction trap
@@ -103,10 +103,10 @@ mapping clause assembly = C_SC(csc2, csc1, uimm)
  * Take a store/AMO address misaligned exception if not naturally
  * aligned.
  */
-function clause execute(C_SC(csc2, csc1, uimm)) = {
+function clause decompress(C_SC(csc2, csc1, uimm)) = {
   let cs2 = creg2reg_idx(csc2) in
   let cs1 = creg2reg_idx(csc1) in
-  execute(StoreCapImm(cs2, cs1, zero_extend(uimm)))
+  Some(StoreCapImm(cs2, cs1, zero_extend(uimm)))
 }
 
 union clause ast = C_SCSP : (regidx, bits(10))
@@ -135,8 +135,8 @@ mapping clause assembly = C_SCSP(cs2, uimm)
  * Take a store/AMO address misaligned exception if not naturally
  * aligned.
  */
-function clause execute(C_SCSP(cs2, uimm)) =
-  execute(StoreCapImm(cs2, sp, zero_extend(uimm)))
+function clause decompress(C_SCSP(cs2, uimm)) =
+  Some(StoreCapImm(cs2, sp, zero_extend(uimm)))
 
 /* Capability arithmetic instructions */
 union clause ast = C_ADDI16SP_capmode : (bits(10))
@@ -164,8 +164,8 @@ mapping clause assembly = C_ADDI16SP_capmode(nzimm) if nzimm != 0b0000000000
  * multiples of 16 in the range (-512,496). Clear the tag if the
  * resulting capability is unrepresentable or csp is sealed.
  */
-function clause execute(C_ADDI16SP_capmode(nzimm)) =
-  execute(CADDI(sp, sp, sign_extend(nzimm)))
+function clause decompress(C_ADDI16SP_capmode(nzimm)) =
+  Some(CADDI(sp, sp, sign_extend(nzimm)))
 
 union clause ast = C_ADDI4SPN_capmode : (cregidx, bits(10))
 
@@ -192,9 +192,9 @@ mapping clause assembly = C_ADDI4SPN_capmode(cdc, nzuimm)                     if
  * to generate pointers to stack-allocated variables. Clear the tag if
  * the resulting capability is unrepresentable or csp is sealed.
  */
-function clause execute(C_ADDI4SPN_capmode(cdc, nzuimm)) = {
+function clause decompress(C_ADDI4SPN_capmode(cdc, nzuimm)) = {
   let cd = creg2reg_idx(cdc) in
-  execute(CADDI(cd, sp, zero_extend(nzuimm)))
+  Some(CADDI(cd, sp, zero_extend(nzuimm)))
 }
 
 /* Control flow */
@@ -219,7 +219,7 @@ mapping clause assembly = C_JALR_capmode(cs1)              if cs1 != zreg
  * See JALR for execution of the expanded instruction as shown above.
  * Note that the offset is zero in the expansion.
  */
-function clause execute(C_JALR_capmode(cs1)) = execute(JALR_capmode(zeros(), cs1, ra))
+function clause decompress(C_JALR_capmode(cs1)) = Some(JALR_capmode(zeros(), cs1, ra))
 
 union clause ast = C_JR_capmode : (regidx)
 
@@ -242,7 +242,7 @@ mapping clause assembly = C_JR_capmode(cs1) if cs1 != zreg
  * See JALR for execution of the expanded instruction as shown above.
  * Note that the offset is zero in the expansion.
  */
-function clause execute(C_JR_capmode(cs1)) = execute(JALR_capmode(zeros(), cs1, zreg))
+function clause decompress(C_JR_capmode(cs1)) = Some(JALR_capmode(zeros(), cs1, zreg))
 
 union clause ast = C_JAL_capmode : (bits(12))
 
@@ -263,7 +263,7 @@ mapping clause assembly = C_JAL_capmode(imm) if xlen == 32
  *
  * Link the next linear pcc to cd and seal. Jump to pcc.address+offset.
  */
-function clause execute(C_JAL_capmode(imm)) = execute(JAL_capmode(sign_extend(imm), ra))
+function clause decompress(C_JAL_capmode(imm)) = Some(JAL_capmode(sign_extend(imm), ra))
 
 union clause ast = C_MV_capmode : (regidx, regidx)
 
@@ -285,7 +285,7 @@ mapping clause encdec_compressed_capmode = C_MV_capmode(cd, cs2)
  *
  * Capability register cd is replaced with the contents of cs2.
  */
-function clause execute(C_MV_capmode(cd, cs2)) = execute(CMV(cd, cs2))
+function clause decompress(C_MV_capmode(cd, cs2)) = Some(CMV(cd, cs2))
 
 mapping clause assembly = C_MV_capmode(cd, cs2)
   if cd != zreg & cs2 != zreg
