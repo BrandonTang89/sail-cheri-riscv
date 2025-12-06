@@ -273,7 +273,9 @@ function test_cheri_circular() -> unit = {
       size       = half_mem,
       attributes = attr,
     };
-    pma_regions = [| region_0, region_1 |];
+    pma_regions[0] = region_0;
+    pma_regions[1] = region_1;
+    num_pma_regions = 2;
 
     // Write to low end of address space
     X(valR) = zeros(sizeof(xlen - 8)) @ 0xbe;
