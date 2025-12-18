@@ -1,3 +1,4 @@
 [submodule "sail-riscv"]
 	path = sail-riscv
-	url = https://github.com/BrandonTang89/sail-riscv/tree/cva6-formal
+	url = https://github.com/BrandonTang89/sail-riscv.git
+	branch = cva6-formal
